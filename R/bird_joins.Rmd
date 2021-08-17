@@ -1,0 +1,84 @@
+---
+title: "Bird Joins"
+author: "Grace Lewin"
+date: "8/17/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(here)
+library(lubridate)
+```
+
+```{r}
+bird_observations <- read_csv(here("data", "52_pp52_birds_1.csv"))
+
+sites <- read_csv(here("data", "52_pp52_sites_1.csv"))
+
+surveys <- read_csv(here("data", "52_pp52_surveys_1.csv"))
+
+taxalist <- read_csv(here("data", "52_pp52_taxalist_1.csv"))
+
+birds_subset <- bird_observations %>% 
+  filter(species_id %in% c("BHCO", "RWBL")) %>% 
+  filter(site_id %in% c("LI-W", "NU-C"))
+```
+
+## Left Join Practice
+
+```{r}
+birds_left <- birds_subset %>% 
+  left_join(sites, by = "site_id") %>% 
+  left_join(taxalist, by = "species_id")
+```
+
+## Full Join practice
+
+I expect a full_join() between birds_subset and sites to give a data frame with all the information from both data frames included. Even if there is not a match between the two data frames.
+
+```{r}
+birds_full <- full_join(birds_subset, sites, by = "site_id")
+```
+
+
+## Inner join practice
+
+i expect an inner_join() between birds_subset and taxalist to contain a data frame that keeps the information if there is a key match between the two data frames.
+
+```{r}
+birds_inner <- inner_join(birds_subset, taxalist, by = "species_id")
+
+birds_taxa_left <- left_join(birds_subset, taxalist, by = "species_id")
+```
+
+
+## Task 2: Data Wrangling and visualization with birds
+
+```{r}
+bird_observations <- bird_observations %>% 
+  rename(bird_obs_notes = notes)
+
+bird_subset_2 <- bird_observations %>% 
+  left_join(taxalist, by = "species_id") %>% 
+  left_join(sites, by = "site_id") %>% 
+  left_join(surveys, by = c("site_id", "survey_id")) %>% 
+  select(survey_date, common_name, park_name, bird_count) %>% 
+  mutate(survey_month = lubridate::month(survey_date)) %>% 
+  mutate(survey_month = as.factor(survey_month)) %>% 
+  relocate(survey_month, .after = survey_date)
+
+num_birds_park_month <- bird_subset_2 %>% 
+  group_by(park_name, survey_month) %>% 
+  summarize(count = n())
+
+birds_subset_2_parks_subset <- bird_subset_2 %>% 
+  filter(park_name %in% c("Lindo", "Orme", "Palomino", "Sonrisa"))
+  
+```
+
+
+
+
+
